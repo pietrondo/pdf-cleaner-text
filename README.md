@@ -27,4 +27,47 @@ pip install -r requirements.txt
 4. Scaricare PDF pulito
 
 ## Deployment CloudPanel
-Seguire la guida ufficiale: https://www.cloudpanel.io/docs/v2/python/deployment/uwsgi/
+
+### Prerequisiti
+- Server Linux con CloudPanel installato
+- Python 3.8+ installato
+- uWSGI e Nginx configurati
+
+### Configurazione uWSGI
+1. Creare file di configurazione `pdf-cleaner-text.uwsgi.ini`:
+```ini
+[uwsgi]
+plugins = python3
+master = true
+protocol = uwsgi
+socket = 127.0.0.1:8090
+wsgi-file = /home/site-user/htdocs/pdf-cleaner-text/app.py
+
+buffer-size = 8192
+reload-on-rss = 250
+workers = 4
+enable-threads = true
+close-on-exec = true
+umask = 0022
+uid = site-user
+gid = site-user
+ignore-sigpipe = true
+ignore-write-errors = true
+disable-write-exception = true
+```
+
+### Configurazione Nginx
+Modificare il file di configurazione Nginx per includere:
+```nginx
+location / {
+    include uwsgi_params;
+    uwsgi_read_timeout 3600;
+    uwsgi_pass 127.0.0.1:8090;
+}
+```
+
+### Avvio applicazione
+```bash
+systemctl restart uwsgi
+systemctl restart nginx
+```
